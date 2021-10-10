@@ -15,10 +15,10 @@ EpollManager::EpollManager(int listenFd, int size, int nEvents)
       epollFd(epoll_create(size)),
       data({}),
       handler(EventHandler(epollFd, listenFd)) {}
-void EpollManager::work() {
+void EpollManager::work(int timeout) {
   data = {};
   while (true) {
-    int ret = epoll_wait(epollFd, events, nEvents, -1);
+    int ret = epoll_wait(epollFd, events, nEvents, timeout);
     handler.handle(events, ret, data);
   }
 }

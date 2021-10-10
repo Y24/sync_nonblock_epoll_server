@@ -8,13 +8,17 @@ void EventHandler::handle_accpet(std::unordered_map<int, DemoData> &data) {
   socklen_t clientAddrLen = sizeof(clientAddr);
   int clientFd =
       accept(listenFd, (struct sockaddr *)&clientAddr, &clientAddrLen);
-  if (clientFd == -1)
+
+  // NOTE: Differ from blocking mode.
+  if (clientFd == -1) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) return;
     perror("accpet error:");
-  else {
+  } else {
     std::string addr(inet_ntoa(clientAddr.sin_addr));
     int port = clientAddr.sin_port;
     printf("accept a new client: %s:%d\n", addr.data(), port);
-    data[clientFd] = DemoData(session_init, factory.toString<int>(clientFd));
+    data[clientFd] =
+        DemoData(session_init, dataFactory.toString<int>(clientFd));
     eventManager.add_event(clientFd, EPOLLOUT);
     if (!sessionManager.attach(Session(clientFd, InetAddr(addr, port)))) {
       fprintf(stderr, "ServerEventHandler handle_accpet attach fails\n");
@@ -23,7 +27,8 @@ void EventHandler::handle_accpet(std::unordered_map<int, DemoData> &data) {
 }
 void EventHandler::do_read(int fd, std::unordered_map<int, DemoData> &data) {
   IOHandler ioHandler(fd);
-  auto res = ioHandler.read();
+  auto [statusCode, res] = ioHandler.read();
+  if (statusCode == io_would_block) return;
   std::string log =
       "do_read: fd:" + std::to_string(fd) + " ,res: " + res.toStr().c_str();
   logPool.emplace_back(log);
@@ -46,8 +51,8 @@ void EventHandler::do_read(int fd, std::unordered_map<int, DemoData> &data) {
       fprintf(stderr, "ServerEventHandler do_read meets session_init!\n");
       break;
     case session_pair:
-      status = factory.stringTo<int>(res.getBody().content).first;
-      targetFd = factory.stringTo<int>(res.getBody().content).second;
+      status = dataFactory.stringTo<int>(res.getBody().content).first;
+      targetFd = dataFactory.stringTo<int>(res.getBody().content).second;
       if (!status || !sessionManager.merge({fd, targetFd})) {
         fprintf(stderr, "ServerEventHandler do_read: session_pair fails\n");
         data[fd] = DemoData(session_pair, "NOK");
@@ -79,7 +84,10 @@ void EventHandler::do_write(int fd, std::unordered_map<int, DemoData> &data) {
   std::string log = "do_write: fd:" + std::to_string(fd) +
                     " ,res: " + data[fd].toStr().c_str();
   logPool.emplace_back(log);
-  if (!ioHandler.write(data[fd])) {
+  auto statusCode = ioHandler.write(data[fd]);
+  if (statusCode == io_would_block)
+    return;
+  else if (statusCode == io_error) {
     fprintf(stderr, "do_write fails: fd(%d),data(%s)", fd,
             data[fd].toStr().c_str());
   }

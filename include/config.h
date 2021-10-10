@@ -7,4 +7,6 @@
 #define LISTENQ 5
 #define FDSIZE 1000
 #define EPOLLEVENTS 100
+// ms
+#define EPOLL_TIMEOUT 5000
 #endif  // config.h

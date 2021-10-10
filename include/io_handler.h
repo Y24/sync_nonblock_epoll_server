@@ -5,6 +5,11 @@
 #include <unistd.h>
 
 #include "demo_data.h"
+enum IOStatusCode {
+  io_would_block,
+  io_successed,
+  io_error,
+};
 class IOHandler {
  private:
   int fd;
@@ -20,8 +25,8 @@ class IOHandler {
 
  public:
   IOHandler(int fd);
-  DemoData read();
-  bool write(DemoData data);
+  std::pair<IOStatusCode, DemoData> read();
+  IOStatusCode write(DemoData data);
   ~IOHandler() = default;
 };
 

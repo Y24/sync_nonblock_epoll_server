@@ -5,7 +5,10 @@
                         "label": "C/C++: g++ build active file",
                         "command": "/usr/bin/g++",
                         "args": [
+                                "-I",
+                                "${fileDirname}/include",
                                 "-g",
+                                "${fileDirname}/src/*.cpp",
                                 "${file}",
                                 "-o",
                                 "${fileDirname}/${fileBasenameNoExtension}"

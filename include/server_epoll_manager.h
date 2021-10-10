@@ -5,6 +5,7 @@
 
 #include <unordered_map>
 
+#include "config.h"
 #include "server_event_handler.h"
 class EpollManager {
  private:
@@ -20,7 +21,8 @@ class EpollManager {
  public:
   EpollManager(int listenFd, int size, int nEvents);
   EpollManager(EpollManager& other);
-  void work();
+  // Wait for {timeout} ms per loop.
+  void work(int timeout = EPOLL_TIMEOUT);
   ~EpollManager();
 };
 #endif  // server_epoll_manager.h

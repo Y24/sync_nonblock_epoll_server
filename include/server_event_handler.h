@@ -13,13 +13,15 @@
 #include "event_manager.h"
 #include "io_handler.h"
 #include "session_manager.h"
+#include "socket_factory.h"
 class EventHandler {
  private:
   int epollFd;
   int listenFd;
   EventManager eventManager;
   SessionManager sessionManager;
-  DataFactory factory;
+  DataFactory dataFactory;
+  SocketFactory socketFactory;
   std::vector<std::string> logPool;
   /// Note: handle_accpet don't contains the session-pairing work
   /// when accpet successed, write `fd` immidiately back to the

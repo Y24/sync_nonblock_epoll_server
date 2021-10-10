@@ -8,13 +8,14 @@ SocketServer::SocketServer(std::string ip, int port, int waitings)
   inet_pton(AF_INET, ip.data(), &addr.sin_addr);
 }
 bool SocketServer::init() {
+  if (!socketFactory.setNonBlocked(fd)) return false;
   return bind(fd, (sockaddr*)&addr, sizeof(addr)) != -1 &&
          listen(fd, waitings) != -1;
 }
 
-void SocketServer::serve(int size, int nEvents) {
+void SocketServer::serve(int size, int nEvents, int timeout) {
   EpollManager mangager(fd, size, nEvents);
-  mangager.work();
+  mangager.work(timeout);
 }
 
 SocketServer::~SocketServer() {
